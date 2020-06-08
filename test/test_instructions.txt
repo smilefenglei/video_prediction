@@ -1,0 +1,11 @@
+根据给作者发邮之后的回复，内插和外插的motion mask是一样的
+motion_mask 下载链接：
+https://liuziwei7.github.io/projects/VoxelFlow
+
+测试集下载链接：（下载Video Extrapolation Results（UCF-101）即可）
+https://liuziwei7.github.io/projects/VoxelFlow
+
+测试的时候，首先利用保存的checkpoint进行测试，生成图片，再将生成的图片copy到本地电脑上
+然后利用eval_voxelflow.m进行测试（这个文件也是deep voxel flow提供的）
+
+所有实验的测试都利用的是deep voxel flow这个工作share出来的测试集

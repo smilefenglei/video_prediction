@@ -1,0 +1,5 @@
+classInd.txt --- 101
+testlist01.txt --- 3783
+trainlist01.txt --- 9537
+统计各txt行数.bat.txt --- 7
+统计各txt行数.txt --- 4

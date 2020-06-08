@@ -1,0 +1,89 @@
+第一步：安装ffmpeg
+
+在windows系统下安装，因为当时在linux下试了很久，一直不成功，
+结果google搜索ffmpeg install，
+搜出来靠前的结果就是如何在windows下安装ffmepg，
+结果一试很快就安装好了，而且可以正常使用。
+
+下载网址：
+https://ffmpeg.zeranoe.com/builds/win64/static/
+
+参考网址：
+https://zh.wikihow.com/%E5%9C%A8Windows%E4%B8%8A%E5%AE%89%E8%A3%85FFmpeg%E7%A8%8B%E5%BA%8F
+http://adaptivesamples.com/how-to-install-ffmpeg-on-windows/
+https://www.npmjs.com/package/@ffmpeg-installer/ffmpeg
+
+
+第二步：数据处理
+根据作者给的链接
+https://git.sesse.net/?p=voxel-flow
+找到extract-ucf101.sh
+https://git.sesse.net/?p=voxel-flow;a=commit;h=20c4af9193ac6d220215529c85f4e800157427b2
+利用这个脚本文件提取出满足条件的triplets
+
+
+1. 作者在share出来的extract-ucf101.sh中提到
+Run as follows:
+./extract-ucf101.sh dir/file.avi
+结合Shell脚本的运行方法，于是在git bash下输入
+/bin/sh extract-ucf101.sh ApplyLipstick/v_ApplyLipstick_g04_c04.avi
+即可将视频转成png格式的图片，同时生成相应的txt文件，包括满足条件的连续的3帧独立的txt
+比如
+v_ApplyEyeMakeup_g01_c01_avi__frame1.txt
+v_ApplyEyeMakeup_g01_c01_avi__frame2.txt
+v_ApplyEyeMakeup_g01_c01_avi__frame3.txt
+
+ 注意：修改里面的文件路径
+
+2. 但是这样存在一个问题，就是你只能对一个视频文件进行操作。于是决定写一个批处理文件。
+想法是按行写入所有指令到txt文件中，再将txt文件变成.sh文件。
+于是运行python get_txt_avi_to_png.py将所有的指令写入到avi_to_png.txt中。
+然后把avi_to_png.txt转成avi_to_png.sh，运行 /bin/sh avi_to_png.sh，跑了一段时间之后发现这样虽然不用再手动去输入指令，
+但是要跑完所有的数据，耗时比较长，于是把数据分成了几个部分，同时打开多个git bash窗口，运行脚本文件。
+
+
+3. 于是运行python part_get_txt_avi_to_png.py文件，得到多个avi_to_png，运行脚本文件。
+在运行过程中发现一些新的问题，就是在提取triplets的时候必须满足一定的条件，所以有些视频很可能是没有满足条件的triplets的，导致其没有
+成功生成txt文件，采取的方式是
+在运行脚本文件的过程中每隔一段时间记录一下那些没有成功生成txt文件的视频，将其记录在avi_to_png(一些无法生成txt的视频).docx中。
+
+注意：1.这部分划分得改一下代码中的循环，注意划分范围；2. 修改里面的文件路径
+
+4. 等所有的脚本文件运行完成之后，将数据集拷贝到服务器上，把视频转变成图片，这当中包含大量的小文件，大约有230多G，通过scp上传拷贝速度很慢，
+压缩也要花上大概3.4天的时间，于是通过移动硬盘直接与服务器相连，进行拷贝，270G左右的文件大概用了28个小时成功上传。
+PS: move的速度会快于copy，但是为了数据的备份，采用的是copy的方式。
+
+5. 接下来由于每个视频转换成图片都有生成3个txt文件，于是先将所有的txt文件中的内容按顺序汇总到3个总的txt中，
+同时会将每个主题的相应的视频生成的txt拷贝一份出来放入新的文件夹，
+方便和之前记录的那些没有成功生成txt文件的视频做一个检查比对。
+运行python merge_all.py 
+
+注意：修改里面的文件路径
+
+6. 确认train set和test set的划分，根据作者share出来的ucf101_train_test_split，查看其中的文件，初步统计作者是把每个主题视频的g01-g07用作测试集，
+g08-g25用作训练集。
+
+为了确保这一统计的准确性，运行python check_train_test_split.py进行检查。检查无误。
+
+7. 检查完成之后，根据三个总的txt文件，运行python create_triplets_dataset.py把连续的三帧按照指定格式存放。
+
+这里所说的格式是
+./ApplyEyeMakeup_00001/v_ApplyEyeMakeup_g01_c01_avi__0003
+./ApplyEyeMakeup_00001/v_ApplyEyeMakeup_g01_c01_avi__0004
+./ApplyEyeMakeup_00001/v_ApplyEyeMakeup_g01_c01_avi__0005
+
+./ApplyEyeMakeup_00002/v_ApplyEyeMakeup_g01_c01_avi__0005
+./ApplyEyeMakeup_00002/v_ApplyEyeMakeup_g01_c01_avi__0006
+./ApplyEyeMakeup_00002/v_ApplyEyeMakeup_g01_c01_avi__0007
+
+
+后期实验的时候由于这种方式是将已由视频转成图像的数据重新copy出来，存在占用2倍存储空间的问题，于是就改变了方式，从已由视频转成图像的数据的路径下去读取
+
+注意：修改里面的文件路径
+
+8. 运行python create_train_test_txt_files.py，根据训练集和测试集的划分生成txt文件。
+
+注意：修改里面的文件路径
+
+
+
